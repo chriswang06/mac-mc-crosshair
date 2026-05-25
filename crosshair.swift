@@ -14,7 +14,7 @@ extension NSColor {
 // ---- Config ----
 // Appearance
 let useCrosshair: Bool = true                  // false = solid dot, true = crosshair
-let dotColor: NSColor = .hex(0xd43fa7)         // hex literal; or use .systemRed, .systemBlue, etc.
+let markerColor: NSColor = .hex(0xd43fa7)         // hex literal; or use .systemRed, .systemBlue, etc.
 let dotSize: CGFloat = 6                      // dot diameter (points)
 let crosshairArm: CGFloat = 5                 // crosshair arm length per side
 let crosshairThickness: CGFloat = 2
@@ -143,7 +143,7 @@ startWatchingSlackowWallConfig()
 
 final class DotView: NSView {
     override func draw(_ dirtyRect: NSRect) {
-        dotColor.setFill()
+        markerColor.setFill()
         if useCrosshair {
             let cx = bounds.midX, cy = bounds.midY
             let h = NSRect(x: cx - crosshairArm, y: cy - crosshairThickness/2,

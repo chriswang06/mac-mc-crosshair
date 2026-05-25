@@ -37,7 +37,7 @@ cd crosshair
 Open `crosshair.swift` in any text editor and adjust the constants at the top:
 
 - `useCrosshair` — `true` for a crosshair, `false` for a dot
-- `dotColor` — e.g. `.systemRed`, `.systemGreen`, `.white`
+- `markerColor` — hex like `.hex(0xFF3B30)` (with optional alpha: `.hex(0x00FF00, alpha: 0.7)`), or a named system color like `.systemRed`, `.systemBlue`, `.white`
 - `dotSize`, `crosshairArm`, `crosshairThickness` — size in points
 - `triggerKeyCode` — the hotkey (see [Picking a different hotkey](#picking-a-different-hotkey))
 - Manual positioning constants — only needed if you don't use SlackowWall
@@ -109,7 +109,7 @@ All settings are constants at the top of `crosshair.swift`:
 ```swift
 // Appearance
 let useCrosshair: Bool = true       // false = solid dot
-let dotColor: NSColor = .systemRed
+let markerColor: NSColor = .hex(0xFF3B30)   // hex (with optional alpha), or .systemRed / .systemBlue / etc.
 let dotSize: CGFloat = 12           // dot diameter (points)
 let crosshairArm: CGFloat = 10
 let crosshairThickness: CGFloat = 2
