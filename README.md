@@ -72,6 +72,11 @@ The first time you launch, the hotkey won't do anything. macOS requires Input Mo
 
 Press `;` (or whatever hotkey you set) to toggle the dot on/off.
 
+### 8. (optional) Add to autostart on Slackowall
+
+1. Open Slackowall
+2. Open settings -> Utilities -> Startup Applications
+3. Enable it, and add the Crosshair.app
 ---
 
 ## Updating / changing settings
