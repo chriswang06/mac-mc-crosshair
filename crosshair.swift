@@ -1,10 +1,20 @@
 import Cocoa
 import Carbon.HIToolbox
 
+extension NSColor {
+    /// Hex constructor: `.hex(0xFF3B30)` or `.hex(0x00FF00, alpha: 0.7)`.
+    static func hex(_ value: UInt32, alpha: CGFloat = 1) -> NSColor {
+        NSColor(srgbRed: CGFloat((value >> 16) & 0xFF) / 255,
+                green:   CGFloat((value >>  8) & 0xFF) / 255,
+                blue:    CGFloat( value        & 0xFF) / 255,
+                alpha:   alpha)
+    }
+}
+
 // ---- Config ----
 // Appearance
 let useCrosshair: Bool = true                  // false = solid dot, true = crosshair
-let dotColor: NSColor = .systemRed
+let dotColor: NSColor = .hex(0xd43fa7)         // hex literal; or use .systemRed, .systemBlue, etc.
 let dotSize: CGFloat = 6                      // dot diameter (points)
 let crosshairArm: CGFloat = 5                 // crosshair arm length per side
 let crosshairThickness: CGFloat = 2
