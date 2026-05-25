@@ -22,7 +22,7 @@ cat > "$CONTENTS/Info.plist" <<PLIST
 <dict>
   <key>CFBundleName</key><string>$APP_NAME</string>
   <key>CFBundleDisplayName</key><string>$APP_NAME</string>
-  <key>CFBundleIdentifier</key><string>com.chriswang.crosshair.slackow</string>
+  <key>CFBundleIdentifier</key><string>com.chriswang.crosshair</string>
   <key>CFBundleVersion</key><string>1.0</string>
   <key>CFBundleShortVersionString</key><string>1.0</string>
   <key>CFBundleExecutable</key><string>$APP_NAME</string>
@@ -34,8 +34,8 @@ cat > "$CONTENTS/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# Sign with a stable identity so TCC permissions (Accessibility / Input Monitoring)
-# survive rebuilds. Create a self-signed cert named "Crosshair Self-Signed" in
+# Sign with a stable identity so the Input Monitoring permission survives
+# rebuilds. Create a self-signed cert named "Crosshair Self-Signed" in
 # Keychain Access first (Certificate Assistant → Create a Certificate, type
 # "Code Signing", self-signed root). Falls back to ad-hoc if the cert isn't found.
 # We look up by SHA1 so an untrusted self-signed cert still works.

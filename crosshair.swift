@@ -3,7 +3,7 @@ import Carbon.HIToolbox
 
 // ---- Config ----
 // Appearance
-let useCrosshair: Bool = false                  // false = solid dot, true = crosshair
+let useCrosshair: Bool = true                  // false = solid dot, true = crosshair
 let dotColor: NSColor = .systemRed
 let dotSize: CGFloat = 6                      // dot diameter (points)
 let crosshairArm: CGFloat = 5                 // crosshair arm length per side
