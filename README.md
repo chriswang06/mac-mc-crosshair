@@ -169,7 +169,7 @@ Every rebuild of the app changes its code signature, which makes macOS think it'
    - Check **"Let me override defaults"**
 4. Click through the rest accepting defaults. Store it in the **login** keychain.
 
-That's it — the build script auto-detects this cert. From now on, rebuilds keep your permission grants.
+The build script auto-detects this cert. From now on, rebuilds keep your permission grants.
 
 ---
 
