@@ -70,7 +70,7 @@ The first time you launch, the hotkey won't do anything. macOS requires Input Mo
 
 ### 7. Use it
 
-Press `;` (or whatever hotkey you set) to toggle the dot on/off. That's it.
+Press `;` (or whatever hotkey you set) to toggle the dot on/off.
 
 ---
 
