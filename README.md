@@ -1,61 +1,106 @@
 # Crosshair
 
-A tiny single-file macOS utility that draws a click-through crosshair (or dot) overlay at a fixed screen position. Toggle it with a hotkey. Useful for windowed/borderless games that don't have a built-in crosshair — especially Minecraft when used alongside [SlackowWall](https://github.com/Slackow/SlackowWall).
+A tiny single-file macOS utility that draws a click-through crosshair (or dot) overlay at the center of your screen. Toggle it with a hotkey. Useful for windowed/borderless games that don't have a built-in crosshair — especially Minecraft when used alongside [SlackowWall](https://github.com/Slackow/SlackowWall).
 
 ## Features
 
-- One Swift file, ~180 lines. No dependencies beyond the macOS SDK.
+- Single Swift file. No dependencies beyond the macOS SDK.
 - Toggleable global hotkey (default: `;`).
 - Click-through overlay that floats above other windows, including across Spaces and most fullscreen apps.
 - **Auto-detects Minecraft window dimensions from SlackowWall** — zero configuration if you use it.
+- Follows the frontmost Minecraft window across multiple monitors.
 - Manual constants in source as an escape hatch for non-SlackowWall users.
 
-## Build & install
+---
 
-Requires the Xcode command line tools:
+## Install
+
+### 1. Get the prerequisites
+
+You need Apple's Xcode command line tools. If you've never run `git` or `swiftc` on this Mac, install them:
 
 ```sh
-xcode-select --install     # if you don't already have them
+xcode-select --install
 ```
 
-Then:
+A small installer window will pop up — accept and let it finish. Skip this step if you already have them.
+
+### 2. Clone
 
 ```sh
 git clone https://github.com/chriswang06/crosshair.git
 cd crosshair
+```
+
+### 3. Customize (optional)
+
+Open `crosshair.swift` in any text editor and adjust the constants at the top:
+
+- `useCrosshair` — `true` for a crosshair, `false` for a dot
+- `dotColor` — e.g. `.systemRed`, `.systemGreen`, `.white`
+- `dotSize`, `crosshairArm`, `crosshairThickness` — size in points
+- `triggerKeyCode` — the hotkey (see [Picking a different hotkey](#picking-a-different-hotkey))
+- Manual positioning constants — only needed if you don't use SlackowWall
+
+If you skip this step, the defaults (red crosshair, hotkey `;`, SlackowWall auto-detect) will be used.
+
+### 4. Build
+
+```sh
 ./build_crosshair_app.sh
+```
+
+This produces `Crosshair.app` in the same directory.
+
+### 5. Launch the app
+
+```sh
 open Crosshair.app
 ```
 
-You can also run the source directly without building an app:
+(Or double-click `Crosshair.app` in Finder.)
 
-```sh
-swift crosshair.swift
-```
+### 6. Grant Input Monitoring permission
 
-In script mode, the parent terminal needs the TCC permissions (see below) and the app exits when you Ctrl-C or close the terminal.
+The first time you launch, the hotkey won't do anything. macOS requires Input Monitoring permission for a global hotkey listener:
 
-## Permissions
+1. Open **System Settings → Privacy & Security → Input Monitoring**.
+2. Click **`+`**, navigate to `Crosshair.app`, add it, and make sure the toggle is **on**.
+3. Quit Crosshair (Dock → ⌘Q) and re-launch it. The permission only applies at launch.
 
-`Crosshair` uses a `CGEventTap` to listen for the hotkey globally. macOS requires **both** of these for that to work:
+### 7. Use it
 
-1. System Settings → **Privacy & Security → Accessibility** → add `Crosshair.app`, toggle on.
-2. System Settings → **Privacy & Security → Input Monitoring** → add `Crosshair.app`, toggle on.
+Press `;` (or whatever hotkey you set) to toggle the dot on/off. That's it.
 
-**Important:** the build is ad-hoc signed, which means each rebuild produces a new code-signing identity. macOS treats the rebuilt app as a *different* app, so after every rebuild you have to **remove the old entry** from both lists and re-add the freshly built `Crosshair.app`. If you don't, the hotkey will silently do nothing.
+---
+
+## Updating / changing settings
+
+All settings are constants at the top of `crosshair.swift` (color, size, hotkey, dot vs crosshair, manual positioning overrides). To change them:
+
+1. Edit the constants in `crosshair.swift`.
+2. Run `./build_crosshair_app.sh` again.
+3. **Important:** since rebuilds produce a new code signature, macOS forgets your permission grant. Go back to System Settings → Input Monitoring, remove `Crosshair`, then re-add the freshly built one.
+4. Relaunch.
+
+If you plan to rebuild a lot, see the [Avoiding the permission re-grant dance](#avoiding-the-permission-re-grant-dance) section below.
+
+---
 
 ## SlackowWall integration
 
-If you use [SlackowWall](https://github.com/Slackow/SlackowWall) for Minecraft speedrunning, Crosshair automatically reads your **Settings → Dimensions → Gameplay Mode** values (W, H, X, Y) and centers the crosshair inside that region. No editing of `crosshair.swift` required.
+If you use [SlackowWall](https://github.com/Slackow/SlackowWall) for Minecraft speedrunning, Crosshair automatically reads your **Settings → Dimensions → Gameplay Mode** values (W, H, X, Y) and centers the crosshair inside that region. No editing required.
 
 It works by reading:
 
-- The active profile UUID from SlackowWall's `UserDefaults` (`com.slackow.SlackowWall` / `currentProfileRawID`).
-- The profile JSON at `~/Library/Application Support/SlackowWall/Profiles/<UUID>.json`, specifically the `mode.baseMode` object.
+- The active profile UUID from SlackowWall's preferences (`UserDefaults(suiteName: "com.slackow.SlackowWall")` key `currentProfileRawID`).
+- The profile JSON at `~/Library/Application Support/SlackowWall/Profiles/<UUID>.json`, specifically `mode.baseMode`.
 
-A file watcher reloads the dimensions whenever you save changes in SlackowWall, so you don't need to restart Crosshair after retuning your Gameplay Mode values. The hotkey itself never re-queries — it just shows/hides the overlay at the cached position. That matters because `;` is also commonly a SlackowWall resize keybind; you don't want both apps doing redundant work on each press.
+A file watcher reloads the dimensions whenever you save changes in SlackowWall, so you don't need to restart Crosshair after retuning your Gameplay Mode values. The hotkey itself never re-reads the file — it just shows/hides at the cached position. (Important if `;` is also a SlackowWall resize keybind; both apps see the keypress but neither steps on the other.)
 
-If SlackowWall is not installed or has no profile, Crosshair falls back to centering on the full main display (or whatever you've put in the manual constants — see next section).
+If SlackowWall isn't installed or hasn't been configured, Crosshair falls back to centering on the full main display (or whatever you've put in the manual constants — see next section).
+
+---
 
 ## Configuration
 
@@ -72,7 +117,7 @@ let crosshairThickness: CGFloat = 2
 // Hotkey
 let triggerKeyCode: Int64 = Int64(kVK_ANSI_Semicolon)
 
-// Manual positioning (overrides SlackowWall config when non-zero)
+// Manual positioning (overrides SlackowWall when non-zero)
 let targetScreenWidth: CGFloat = 0       // 0 = use main display
 let manualWindowWidth: CGFloat = 0       // 0 = defer to SlackowWall or full screen
 let manualWindowHeight: CGFloat = 0
@@ -80,9 +125,11 @@ let manualWindowX: CGFloat = 0
 let manualWindowTopOffset: CGFloat = 0
 ```
 
-**Priority order** for positioning: explicit manual constants → SlackowWall config → full main screen.
+**Positioning priority** (highest wins):
 
-Edit, rebuild (`./build_crosshair_app.sh`), and re-grant TCC permissions as described above.
+1. Explicit manual constants (if both width and height are non-zero)
+2. SlackowWall config
+3. Full main screen center
 
 ### Picking a different hotkey
 
@@ -92,11 +139,11 @@ Edit, rebuild (`./build_crosshair_app.sh`), and re-grant TCC permissions as desc
 - Numbers: `kVK_ANSI_0` … `kVK_ANSI_9`
 - Others: `kVK_Space`, `kVK_Return`, `kVK_Escape`, `kVK_F1` … `kVK_F12`
 
-Because the tap is `listenOnly`, your hotkey is *not* consumed — it still types into whatever app is focused, and other apps (like SlackowWall) still receive it.
+Because the tap is `listenOnly`, your hotkey is *not* consumed — it still types normally and reaches other apps. Pick a key that doesn't interfere with what you're doing.
 
-### Manual centering without SlackowWall
+### Manual centering (no SlackowWall)
 
-If you want to pin the crosshair to a game window without SlackowWall, set:
+To pin the crosshair to a specific game window:
 
 ```swift
 let manualWindowWidth: CGFloat = 1470
@@ -105,19 +152,36 @@ let manualWindowX: CGFloat = 0
 let manualWindowTopOffset: CGFloat = 33
 ```
 
-The overlay will then center inside that virtual rectangle.
+---
+
+## Avoiding the permission re-grant dance
+
+Every rebuild of the app changes its code signature, which makes macOS think it's a new app and forget your permission grants. To avoid this, sign with a stable self-signed certificate.
+
+### One-time setup
+
+1. Open **Keychain Access** (Cmd-Space → "Keychain Access").
+2. Menu bar → **Keychain Access → Certificate Assistant → Create a Certificate…**
+3. Fill in:
+   - **Name:** `Crosshair Self-Signed`
+   - **Identity Type:** Self Signed Root
+   - **Certificate Type:** Code Signing
+   - Check **"Let me override defaults"**
+4. Click through the rest accepting defaults. Store it in the **login** keychain.
+
+That's it — the build script auto-detects this cert. From now on, rebuilds keep your permission grants.
+
+---
 
 ## Quitting
 
-- Click the Dock icon → Quit (`⌘Q`).
+- Click the Dock icon → Quit (⌘Q).
 - Or from the terminal: `killall Crosshair`.
 
 ## Limitations
 
-- macOS only.
-- No menu-bar or preferences UI — everything is in source constants.
-- Position math assumes a single intended target display. Multi-monitor setups work but only one display gets the overlay.
-- Ad-hoc signing means TCC permissions don't survive rebuilds. If this becomes annoying, you'll want a paid Apple Developer ID.
+- Ad-hoc signing means TCC permissions don't survive rebuilds (workaround above).
+- Settings are source-file constants; no in-app UI.
 
 ## License
 

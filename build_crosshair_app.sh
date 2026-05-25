@@ -34,8 +34,21 @@ cat > "$CONTENTS/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# Ad-hoc sign so the binary's identity stays stable for permission grants
-codesign --force --deep --sign - "$APP_DIR"
+# Sign with a stable identity so TCC permissions (Accessibility / Input Monitoring)
+# survive rebuilds. Create a self-signed cert named "Crosshair Self-Signed" in
+# Keychain Access first (Certificate Assistant → Create a Certificate, type
+# "Code Signing", self-signed root). Falls back to ad-hoc if the cert isn't found.
+# We look up by SHA1 so an untrusted self-signed cert still works.
+CODESIGN_IDENTITY="Crosshair Self-Signed"
+CERT_SHA1=$(security find-identity -p codesigning 2>/dev/null \
+  | awk -v name="$CODESIGN_IDENTITY" 'index($0, name) { print $2; exit }')
+if [ -n "$CERT_SHA1" ]; then
+  codesign --force --deep --sign "$CERT_SHA1" "$APP_DIR"
+  echo "Signed with: $CODESIGN_IDENTITY ($CERT_SHA1)"
+else
+  codesign --force --deep --sign - "$APP_DIR"
+  echo "Signed ad-hoc (no '$CODESIGN_IDENTITY' cert found in Keychain)"
+fi
 
 echo "Built: $APP_DIR"
 echo "Run: open \"$APP_DIR\"  (or double-click it in Finder)"

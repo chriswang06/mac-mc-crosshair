@@ -3,10 +3,10 @@ import Carbon.HIToolbox
 
 // ---- Config ----
 // Appearance
-let useCrosshair: Bool = true                  // false = solid dot
+let useCrosshair: Bool = false                  // false = solid dot, true = crosshair
 let dotColor: NSColor = .systemRed
-let dotSize: CGFloat = 12                      // dot diameter (points)
-let crosshairArm: CGFloat = 10                 // crosshair arm length per side
+let dotSize: CGFloat = 6                      // dot diameter (points)
+let crosshairArm: CGFloat = 5                 // crosshair arm length per side
 let crosshairThickness: CGFloat = 2
 
 // Hotkey (see Carbon.HIToolbox for kVK_ANSI_* codes)
@@ -68,6 +68,41 @@ enum SlackowWallConfig {
 var currentDimensions: GameplayDimensions? = SlackowWallConfig.loadGameplayDimensions()
 var profileWatcher: DispatchSourceFileSystemObject?
 
+/// Finds the NSScreen currently containing the frontmost Minecraft window.
+/// Returns nil if no MC window is found. Reads only window owner name + bounds,
+/// which do not require Screen Recording permission.
+func findMinecraftScreen() -> NSScreen? {
+    let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
+    guard let windows = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]],
+          let primary = NSScreen.screens.first(where: { $0.frame.origin == .zero })
+                        ?? NSScreen.screens.first
+    else { return nil }
+
+    // Windows are returned front-to-back, so the first match is frontmost.
+    for window in windows {
+        let owner = (window[kCGWindowOwnerName as String] as? String) ?? ""
+        let layer = (window[kCGWindowLayer as String] as? Int) ?? -1
+        guard layer == 0 else { continue }
+        let isMC = owner.lowercased() == "java" || owner.lowercased().contains("minecraft")
+        guard isMC else { continue }
+        guard let rawBounds = window[kCGWindowBounds as String] else { continue }
+        let boundsDict = rawBounds as! CFDictionary
+        guard let bounds = CGRect(dictionaryRepresentation: boundsDict),
+              bounds.width > 100, bounds.height > 100
+        else { continue }
+
+        // CGWindowBounds is top-left origin relative to the primary display.
+        // Convert window center to Cocoa bottom-left coords for NSScreen lookup.
+        let centerXGlobal = bounds.midX
+        let centerYCocoa = primary.frame.height - bounds.midY
+        let point = NSPoint(x: centerXGlobal, y: centerYCocoa)
+        if let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) {
+            return screen
+        }
+    }
+    return nil
+}
+
 func startWatchingSlackowWallConfig() {
     guard let url = SlackowWallConfig.profileURL() else { return }
     let fd = open(url.path, O_EVTONLY)
@@ -120,9 +155,12 @@ final class Overlay {
     func toggle() { visible ? hide() : show() }
 
     func show() {
-        let screen: NSScreen? = targetScreenWidth > 0
-            ? NSScreen.screens.first(where: { $0.frame.width == targetScreenWidth }) ?? NSScreen.main
-            : NSScreen.main
+        // Priority: live MC window location > configured screen width > main screen.
+        let screen: NSScreen? = findMinecraftScreen()
+            ?? (targetScreenWidth > 0
+                ? NSScreen.screens.first(where: { $0.frame.width == targetScreenWidth })
+                : nil)
+            ?? NSScreen.main
         guard let screen = screen else { return }
         let frame = screen.frame
         let side = useCrosshair ? max(crosshairArm*2, crosshairThickness) : dotSize
@@ -200,7 +238,7 @@ guard let tap = CGEvent.tapCreate(tap: .cgSessionEventTap,
                                   eventsOfInterest: CGEventMask(eventMask),
                                   callback: tapCallback,
                                   userInfo: nil) else {
-    fputs("Crosshair: failed to create event tap. Grant Accessibility and Input Monitoring permissions and re-launch.\n", stderr)
+    fputs("Crosshair: failed to create event tap. Grant Input Monitoring permission and re-launch.\n", stderr)
     exit(1)
 }
 let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
