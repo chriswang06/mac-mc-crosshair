@@ -28,8 +28,8 @@ A small installer window will pop up — accept and let it finish. Skip this ste
 ### 2. Clone
 
 ```sh
-git clone https://github.com/chriswang06/crosshair.git
-cd crosshair
+git clone https://github.com/chriswang06/mac-mc-crosshair.git
+cd mac-mc-crosshair
 ```
 
 ### 3. Customize (optional)
